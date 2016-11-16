@@ -10,42 +10,45 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-func get_groups() {
+func isPrefixedBy(s *string, prefixes []string) bool {
+	return true
+}
+
+func GetGroups(prefixes []string) ([]*iam.Group, error) {
+
 	sess, err := session.NewSession()
+
 	if err != nil {
-		panic(err)
+		return []*iam.Group{}, err
 	}
 
 	svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
 
 	resp, err := svc.ListGroups(nil)
+
 	if err != nil {
-		panic(err)
+		return []*iam.Group{}, err
 	}
 
-	fmt.Println("> Number of groups: ", len(resp.Groups))
+	groups := make([]*iam.Group, 0)
 
-	for _, res := range resp.Groups {
-		//fmt.Println("  > Group name: ", res.String())
-		fmt.Println("  > Group name: ", *res.GroupName)
-		fmt.Println("          path: ", *res.Path)
-		fmt.Println("          id:   ", *res.GroupId)
-		fmt.Println("          arn:  ", *res.Arn)
-
-		resp, err := svc.GetGroup(&iam.GetGroupInput{GroupName: res.GroupName})
-		if err != nil {
-			panic(err)
+	for _, g := range resp.Groups {
+		if isPrefixedBy(g.GroupName, prefixes) {
+			groups = append(groups, g)
 		}
-
-		fmt.Println("          usrs#:", len(resp.Users))
-
-		fmt.Printf("          usrs: ")
-		for _, userref := range resp.Users {
-			fmt.Printf("%s ", *userref.UserName)
-		}
-
-		fmt.Println("")
 	}
+
+	return groups, nil
+}
+
+func GetUsersInGroup(svc *iam.IAM, group *iam.Group) ([]*iam.User, error) {
+	resp, err := svc.GetGroup(&iam.GetGroupInput{GroupName: group.GroupName})
+
+	if err != nil {
+		return []*iam.User{}, err
+	}
+
+	return resp.Users, nil
 }
 
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
@@ -81,7 +84,7 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 			return nil, err
 		}
 
-		fmt.Fprintln(&out, "# Key id: ", *keyref.SSHPublicKeyId)
+		fmt.Fprintln(&out, "# Key id: ", *metaref.SSHPublicKeyId)
 		fmt.Fprintln(&out, *keyref.SSHPublicKey.SSHPublicKeyBody)
 	}
 
