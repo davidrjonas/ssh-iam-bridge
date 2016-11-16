@@ -1,0 +1,3 @@
+package: github.com/davidrjonas/aws-iam-linux-sso
+import:
+- package: github.com/aws/aws-sdk-go
