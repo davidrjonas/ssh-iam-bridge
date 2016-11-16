@@ -4,25 +4,57 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/user"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-func isPrefixedBy(s *string, prefixes []string) bool {
-	return true
-}
+var iam_svc *iam.IAM
 
-func GetGroups(prefixes []string) ([]*iam.Group, error) {
+func getIamService() *iam.IAM {
+	if iam_svc != nil {
+		return iam_svc
+	}
 
 	sess, err := session.NewSession()
 
 	if err != nil {
-		return []*iam.Group{}, err
+		panic(err)
 	}
 
-	svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
+	iam_svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
+
+	return iam_svc
+}
+
+func isPrefixedBy(s *string, prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(*s, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func filterGroups(groups []*iam.Group, cb func(*iam.Group) bool) []*iam.Group {
+
+	filtered := make([]*iam.Group, 0)
+
+	for _, g := range groups {
+		if cb(g) {
+			filtered = append(filtered, g)
+		}
+	}
+
+	return filtered
+}
+
+func GetGroups(prefixes []string) ([]*iam.Group, error) {
+
+	svc := getIamService()
 
 	resp, err := svc.ListGroups(nil)
 
@@ -30,18 +62,15 @@ func GetGroups(prefixes []string) ([]*iam.Group, error) {
 		return []*iam.Group{}, err
 	}
 
-	groups := make([]*iam.Group, 0)
-
-	for _, g := range resp.Groups {
-		if isPrefixedBy(g.GroupName, prefixes) {
-			groups = append(groups, g)
-		}
-	}
-
-	return groups, nil
+	return filterGroups(resp.Groups, func(g *iam.Group) bool {
+		return isPrefixedBy(g.GroupName, prefixes)
+	}), nil
 }
 
-func GetUsersInGroup(svc *iam.IAM, group *iam.Group) ([]*iam.User, error) {
+func GetGroupUsers(group *iam.Group) ([]*iam.User, error) {
+
+	svc := getIamService()
+
 	resp, err := svc.GetGroup(&iam.GetGroupInput{GroupName: group.GroupName})
 
 	if err != nil {
@@ -51,15 +80,59 @@ func GetUsersInGroup(svc *iam.IAM, group *iam.Group) ([]*iam.User, error) {
 	return resp.Users, nil
 }
 
-func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
+func ensureSystemGroup(group *iam.Group, users []*iam.User) error {
+	// Create system group if it doesn' exist
+	_, err := user.LookupGroup(aws.StringValue(group.GroupName))
 
-	sess, err := session.NewSession()
-
-	if err != nil {
-		return nil, err
+	if _, ok := err.(user.UnknownGroupError); !ok {
+		// create group
+	} else if err != nil {
+		return err
 	}
 
-	svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
+	// TODO: Get the users in the group. Determine which we should add / remove
+	return nil
+}
+
+func SyncGroups(prefix string) error {
+
+	role, err := GetIamRole()
+	if err != nil {
+		// FIXME: Just log it.
+	}
+
+	var prefixes []string
+
+	if role != "" {
+		prefixes = []string{prefix, fmt.Sprintf("%s%s-", prefix, role)}
+	} else {
+		prefixes = []string{prefix}
+	}
+
+	groups, err := GetGroups(prefixes)
+	if err != nil {
+		return err
+	}
+
+	for _, group := range groups {
+		users, err := GetGroupUsers(group)
+		if err != nil {
+			// FIXME: log it
+			continue
+		}
+
+		err = ensureSystemGroup(group, users)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
+
+	svc := getIamService()
 
 	resp, err := svc.ListSSHPublicKeys(&iam.ListSSHPublicKeysInput{UserName: &username})
 
