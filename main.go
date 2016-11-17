@@ -37,20 +37,20 @@ func SyncGroups(prefix string) error {
 		prefixes = []string{prefix}
 	}
 
-	groups, err := getIamGroups(prefixes)
+	groups, err := GetIamGroups(prefixes)
 
 	if err != nil {
 		return err
 	}
 
 	for _, group := range groups {
-		users, err := getIamGroupUsers(group)
+		users, err := GetIamGroupUsers(group)
 		if err != nil {
 			// FIXME: log it
 			continue
 		}
 
-		err = ensureSystemGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
+		err = EnsureSystemGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func SyncGroups(prefix string) error {
 
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
-	keys, err := getActiveSshPublicKeys(username)
+	keys, err := GetActiveSshPublicKeys(username)
 
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
 	for _, key := range keys {
 
-		body, err := getSshEncodePublicKey(key.UserName, key.SSHPublicKeyId)
+		body, err := GetSshEncodePublicKey(key.UserName, key.SSHPublicKeyId)
 
 		if err != nil {
 			return nil, err

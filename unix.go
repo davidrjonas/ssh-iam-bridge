@@ -74,7 +74,7 @@ func stringArrayDiff(tests, set []string) []string {
 	return missing
 }
 
-func ensureSystemGroup(group_name string, gid int, users []string) error {
+func EnsureSystemGroup(group_name string, gid int, users []string) error {
 
 	_, err := user.LookupGroup(group_name)
 

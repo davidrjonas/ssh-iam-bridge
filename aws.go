@@ -48,7 +48,7 @@ func getIamService() *iam.IAM {
 	return iam_svc
 }
 
-func getIamGroups(prefixes []string) ([]*iam.Group, error) {
+func GetIamGroups(prefixes []string) ([]*iam.Group, error) {
 
 	svc := getIamService()
 
@@ -63,7 +63,7 @@ func getIamGroups(prefixes []string) ([]*iam.Group, error) {
 	}), nil
 }
 
-func getIamGroupUsers(group *iam.Group) ([]*iam.User, error) {
+func GetIamGroupUsers(group *iam.Group) ([]*iam.User, error) {
 
 	svc := getIamService()
 
@@ -98,7 +98,7 @@ func onlyActiveKeys(keys []*iam.SSHPublicKeyMetadata) []*iam.SSHPublicKeyMetadat
 	return active
 }
 
-func getActiveSshPublicKeys(username string) ([]*iam.SSHPublicKeyMetadata, error) {
+func GetActiveSshPublicKeys(username string) ([]*iam.SSHPublicKeyMetadata, error) {
 
 	svc := getIamService()
 
@@ -111,7 +111,7 @@ func getActiveSshPublicKeys(username string) ([]*iam.SSHPublicKeyMetadata, error
 	return onlyActiveKeys(resp.SSHPublicKeys), nil
 }
 
-func getSshEncodePublicKey(username, key_id *string) (*string, error) {
+func GetSshEncodePublicKey(username, key_id *string) (*string, error) {
 
 	svc := getIamService()
 
