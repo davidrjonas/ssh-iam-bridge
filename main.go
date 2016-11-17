@@ -2,101 +2,29 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"os"
-	"os/user"
-	"strings"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-var iam_svc *iam.IAM
+func awsToUnixId(aws_id *string) int {
+	// Treat the last 2 bytes of a sha256 hash of aws_id as an uint and add it to 2000
+	b := []byte(*aws_id)
 
-func getIamService() *iam.IAM {
-	if iam_svc != nil {
-		return iam_svc
-	}
+	hasher := sha256.New()
+	hasher.Write(b)
+	h := hasher.Sum(nil)
 
-	sess, err := session.NewSession()
+	data, _ := binary.ReadUvarint(bytes.NewBuffer(h[len(h)-2:]))
 
-	if err != nil {
-		panic(err)
-	}
-
-	iam_svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
-
-	return iam_svc
-}
-
-func isPrefixedBy(s *string, prefixes []string) bool {
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(*s, prefix) {
-			return true
-		}
-	}
-	return false
-}
-
-func filterGroups(groups []*iam.Group, cb func(*iam.Group) bool) []*iam.Group {
-
-	filtered := make([]*iam.Group, 0)
-
-	for _, g := range groups {
-		if cb(g) {
-			filtered = append(filtered, g)
-		}
-	}
-
-	return filtered
-}
-
-func GetGroups(prefixes []string) ([]*iam.Group, error) {
-
-	svc := getIamService()
-
-	resp, err := svc.ListGroups(nil)
-
-	if err != nil {
-		return []*iam.Group{}, err
-	}
-
-	return filterGroups(resp.Groups, func(g *iam.Group) bool {
-		return isPrefixedBy(g.GroupName, prefixes)
-	}), nil
-}
-
-func GetGroupUsers(group *iam.Group) ([]*iam.User, error) {
-
-	svc := getIamService()
-
-	resp, err := svc.GetGroup(&iam.GetGroupInput{GroupName: group.GroupName})
-
-	if err != nil {
-		return []*iam.User{}, err
-	}
-
-	return resp.Users, nil
-}
-
-func ensureSystemGroup(group *iam.Group, users []*iam.User) error {
-	// Create system group if it doesn' exist
-	_, err := user.LookupGroup(aws.StringValue(group.GroupName))
-
-	if _, ok := err.(user.UnknownGroupError); !ok {
-		// create group
-	} else if err != nil {
-		return err
-	}
-
-	// TODO: Get the users in the group. Determine which we should add / remove
-	return nil
+	return 2000 + (int(data) / 2)
 }
 
 func SyncGroups(prefix string) error {
 
 	role, err := GetIamRole()
+
 	if err != nil {
 		// FIXME: Just log it.
 	}
@@ -104,24 +32,25 @@ func SyncGroups(prefix string) error {
 	var prefixes []string
 
 	if role != "" {
-		prefixes = []string{prefix, fmt.Sprintf("%s%s-", prefix, role)}
+		prefixes = []string{prefix, prefix + role + "-"}
 	} else {
 		prefixes = []string{prefix}
 	}
 
-	groups, err := GetGroups(prefixes)
+	groups, err := getIamGroups(prefixes)
+
 	if err != nil {
 		return err
 	}
 
 	for _, group := range groups {
-		users, err := GetGroupUsers(group)
+		users, err := getIamGroupUsers(group)
 		if err != nil {
 			// FIXME: log it
 			continue
 		}
 
-		err = ensureSystemGroup(group, users)
+		err = ensureSystemGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
 		if err != nil {
 			return err
 		}
@@ -132,9 +61,7 @@ func SyncGroups(prefix string) error {
 
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
-	svc := getIamService()
-
-	resp, err := svc.ListSSHPublicKeys(&iam.ListSSHPublicKeysInput{UserName: &username})
+	keys, err := getActiveSshPublicKeys(username)
 
 	if err != nil {
 		return nil, err
@@ -142,23 +69,16 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
 	var out bytes.Buffer
 
-	for _, metaref := range resp.SSHPublicKeys {
-		if *metaref.Status != iam.StatusTypeActive {
-			continue
-		}
+	for _, key := range keys {
 
-		keyref, err := svc.GetSSHPublicKey(&iam.GetSSHPublicKeyInput{
-			SSHPublicKeyId: metaref.SSHPublicKeyId,
-			UserName:       metaref.UserName,
-			Encoding:       aws.String(iam.EncodingTypeSsh),
-		})
+		body, err := getSshEncodePublicKey(key.UserName, key.SSHPublicKeyId)
 
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Fprintln(&out, "# Key id: ", *metaref.SSHPublicKeyId)
-		fmt.Fprintln(&out, *keyref.SSHPublicKey.SSHPublicKeyBody)
+		fmt.Fprintln(&out, "# Key id: ", *key.SSHPublicKeyId)
+		fmt.Fprintln(&out, *body)
 	}
 
 	return &out, nil
