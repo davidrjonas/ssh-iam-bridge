@@ -1,6 +1,6 @@
-package main
+package string_array
 
-func stringArrayContains(test string, set []string) bool {
+func Contains(test string, set []string) bool {
 	for _, member := range set {
 		if test == member {
 			return true
@@ -11,12 +11,12 @@ func stringArrayContains(test string, set []string) bool {
 }
 
 // Compares array1 against a2 and returns the values in array1 that are not present in a2.
-func stringArrayDiff(tests, set []string) []string {
+func Diff(tests, set []string) []string {
 
 	missing := make([]string, 0)
 
 	for _, test := range tests {
-		if stringArrayContains(test, set) {
+		if Contains(test, set) {
 			continue
 		}
 

@@ -5,6 +5,8 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+
+	"github.com/davidrjonas/ssh-iam-bridge/string_array"
 )
 
 func systemUsersAddToGroup(group string, names []string) {
@@ -62,8 +64,8 @@ func EnsureSystemGroup(group_name string, gid int, users []string) error {
 
 	system_users := systemUsersInGroup(group_name)
 
-	systemUsersAddToGroup(group_name, stringArrayDiff(system_users, users))
-	systemUsersRemoveFromGroup(group_name, stringArrayDiff(users, system_users))
+	systemUsersAddToGroup(group_name, string_array.Diff(system_users, users))
+	systemUsersRemoveFromGroup(group_name, string_array.Diff(users, system_users))
 
 	return nil
 }
