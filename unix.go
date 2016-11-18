@@ -54,7 +54,7 @@ func EnsureSystemGroup(group_name string, gid int, users []string) error {
 
 	_, err := user.LookupGroup(group_name)
 
-	if _, ok := err.(user.UnknownGroupError); !ok {
+	if _, ok := err.(user.UnknownGroupError); ok {
 		createAsSystemGroup(group_name, gid)
 	} else if err != nil {
 		return err
