@@ -12,3 +12,15 @@ func iamUserNames(users []*iam.User) []string {
 	}
 	return names
 }
+
+func GetUser(username string) (*iam.User, error) {
+
+	svc := getIamService()
+
+	resp, err := svc.GetUser(GetUserInput{UserName: username})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.User, nil
+}

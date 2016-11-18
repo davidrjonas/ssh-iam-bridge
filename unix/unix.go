@@ -1,4 +1,4 @@
-package main
+package unix
 
 import (
 	"os/exec"
@@ -9,7 +9,7 @@ import (
 	"github.com/davidrjonas/ssh-iam-bridge/string_array"
 )
 
-func systemUsersAddToGroup(group string, names []string) {
+func addToGroup(group string, names []string) {
 	for _, name := range names {
 		if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
 			panic(err)
@@ -17,7 +17,7 @@ func systemUsersAddToGroup(group string, names []string) {
 	}
 }
 
-func systemUsersRemoveFromGroup(group string, names []string) {
+func removeFromGroup(group string, names []string) {
 	for _, name := range names {
 		if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
 			panic(err)
@@ -25,7 +25,7 @@ func systemUsersRemoveFromGroup(group string, names []string) {
 	}
 }
 
-func systemUsersInGroup(name string) []string {
+func usersInGroup(name string) []string {
 
 	out, err := exec.Command("getent", "group", name).Output()
 
@@ -39,7 +39,7 @@ func systemUsersInGroup(name string) []string {
 	return users
 }
 
-func createAsSystemGroup(name string, gid int) *user.Group {
+func createGroup(name string, gid int) *user.Group {
 	// Both exec.Command and user.LookupGroupId want a string
 	id := strconv.Itoa(gid)
 
@@ -52,20 +52,20 @@ func createAsSystemGroup(name string, gid int) *user.Group {
 	return g
 }
 
-func EnsureSystemGroup(group_name string, gid int, users []string) error {
+func EnsureGroup(group_name string, gid int, users []string) error {
 
 	_, err := user.LookupGroup(group_name)
 
 	if _, ok := err.(user.UnknownGroupError); ok {
-		createAsSystemGroup(group_name, gid)
+		createGroup(group_name, gid)
 	} else if err != nil {
 		return err
 	}
 
-	system_users := systemUsersInGroup(group_name)
+	system_users := usersInGroup(group_name)
 
-	systemUsersAddToGroup(group_name, string_array.Diff(system_users, users))
-	systemUsersRemoveFromGroup(group_name, string_array.Diff(users, system_users))
+	addToGroup(group_name, string_array.Diff(system_users, users))
+	removeFromGroup(group_name, string_array.Diff(users, system_users))
 
 	return nil
 }
@@ -87,16 +87,15 @@ func EnsureUser(username string, uid int, comment string) error {
 		return nil
 	}
 
-	cmd := []string{
-		"useradd",
+	args := []string{
 		"--create-home",
 		"--user-group",
 		"--shell", "/bin/bash",
-		"--uid", uid,
+		"--uid", strconv.Itoa(uid),
 		"--comment", comment,
-		username
+		username,
 	}
 
 	// TODO: wrap error
-	return exec.Command(cmd...).Run()
+	return exec.Command("useradd", args...).Run()
 }

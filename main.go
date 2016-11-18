@@ -6,6 +6,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/davidrjonas/ssh-iam-bridge/unix"
 )
 
 func awsToUnixId(aws_id *string) int {
@@ -50,7 +53,7 @@ func SyncGroups(prefix string) error {
 			continue
 		}
 
-		err = EnsureSystemGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
+		err = unix.EnsureGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
 		if err != nil {
 			return err
 		}
@@ -82,6 +85,16 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 	}
 
 	return &out, nil
+}
+
+func CreateUser(username string) error {
+	user, err := GetUser(username)
+
+	if err != nil {
+		return err
+	}
+
+	return unix.EnsureUser(username, awsToUnixId(user.UserId), aws.StringValue(user.Arn))
 }
 
 func main() {
