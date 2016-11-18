@@ -17,7 +17,7 @@ func GetUser(username string) (*iam.User, error) {
 
 	svc := getIamService()
 
-	resp, err := svc.GetUser(GetUserInput{UserName: username})
+	resp, err := svc.GetUser(&iam.GetUserInput{UserName: aws.String(username)})
 	if err != nil {
 		return nil, err
 	}
