@@ -6,10 +6,35 @@ import (
 	"os"
 )
 
-func Contains(test string, set []string) bool {
+func Contains(set []string, test string) bool {
 	for _, member := range set {
 		if test == member {
 			return true
+		}
+	}
+
+	return false
+}
+
+func sum(values []int) (total int) {
+	for _, v := range values {
+		total += v
+	}
+	return
+}
+
+func ContainsAll(set []string, tests []string) bool {
+	total := len(tests)
+	found := make([]int, total)
+
+	for _, s := range set {
+		for idx, check := range tests {
+			if s == check {
+				found[idx] = 1
+				if sum(found) == total {
+					return true
+				}
+			}
 		}
 	}
 
@@ -22,7 +47,7 @@ func Diff(tests, set []string) []string {
 	missing := make([]string, 0)
 
 	for _, test := range tests {
-		if Contains(test, set) {
+		if Contains(set, test) {
 			continue
 		}
 
@@ -34,17 +59,17 @@ func Diff(tests, set []string) []string {
 
 func WriteFile(filename string, string_sets ...[]string) error {
 
-	var f *os.File
+	file, err := os.Create(filename)
 
-	if f, err := os.Create(filename); err != nil {
+	if err != nil {
 		return err
 	}
 
-	defer f.Close()
+	defer file.Close()
 
 	for _, set := range string_sets {
-		for _, lines := range set {
-			if _, err := f.WriteString(line); err != nil {
+		for _, line := range set {
+			if _, err := file.WriteString(line); err != nil {
 				return err
 			}
 		}
@@ -54,19 +79,18 @@ func WriteFile(filename string, string_sets ...[]string) error {
 }
 
 func ReadFile(filename string) (lines []string) {
-	var (
-		f    *os.File
-		line string
-		err  error
-	)
 
-	if file, err := os.Open(filename); err != nil {
+	file, err := os.Open(filename)
+
+	if err != nil {
 		panic(err)
 	}
 
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
+
+	var line string
 
 	for {
 		if line, err = reader.ReadString('\n'); err != nil {
