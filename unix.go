@@ -69,3 +69,34 @@ func EnsureSystemGroup(group_name string, gid int, users []string) error {
 
 	return nil
 }
+
+func userExists(username string) bool {
+	_, err := user.Lookup(username)
+
+	if _, ok := err.(user.UnknownUserError); ok {
+		return false
+	} else if err != nil {
+		panic(err)
+	}
+
+	return true
+}
+
+func EnsureUser(username string, uid int, comment string) error {
+	if userExists(username) {
+		return nil
+	}
+
+	cmd := []string{
+		"useradd",
+		"--create-home",
+		"--user-group",
+		"--shell", "/bin/bash",
+		"--uid", uid,
+		"--comment", comment,
+		username
+	}
+
+	// TODO: wrap error
+	return exec.Command(cmd...).Run()
+}
