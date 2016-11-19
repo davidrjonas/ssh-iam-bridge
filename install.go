@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"os/user"
 	"path"
@@ -106,9 +107,16 @@ func installToSshd(cmd, username string) {
 
 	check(string_array.WriteFile(filename, lines, lines_to_add))
 
-	// TODO: Dump output on error
 	err := exec.Command("sshd", "-t").Run()
-	check(err)
+
+	if err != nil {
+		if exerr, ok := err.(*exec.ExitError); ok {
+			os.Stderr.Write(exerr.Stderr)
+			os.Exit(1)
+		}
+
+		panic(err)
+	}
 }
 
 func installToPam(self_path string) {
