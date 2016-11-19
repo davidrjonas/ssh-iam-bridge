@@ -22,6 +22,8 @@ const EX_EINVAL = 22
 const EX_TEMPFAIL = 75
 const EX_NOPERM = 77
 
+const UID_OFFSET = 2000
+
 func getPrefix() string {
 	return PREFIX
 }
@@ -36,7 +38,7 @@ func awsToUnixId(aws_id *string) int {
 
 	data, _ := binary.ReadUvarint(bytes.NewBuffer(h[len(h)-2:]))
 
-	return 2000 + (int(data) / 2)
+	return UID_OFFSET + (int(data) / 2)
 }
 
 func syncGroups(prefix string) error {
@@ -68,7 +70,7 @@ func syncGroups(prefix string) error {
 			continue
 		}
 
-		err = unix.EnsureGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users))
+		err = unix.EnsureGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users), UID_OFFSET)
 		if err != nil {
 			return err
 		}

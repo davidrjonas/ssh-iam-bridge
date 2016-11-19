@@ -20,8 +20,13 @@ func addToGroup(group string, names []string) {
 	}
 }
 
-func removeFromGroup(group string, names []string) {
+func removeFromGroup(group string, names []string, min_user_id int) {
 	for _, name := range names {
+		// don't remove users with ids lower than our min_user_id
+		if UserId(name) < min_user_id {
+			continue
+		}
+
 		if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
 			panic(err)
 		}
@@ -55,7 +60,7 @@ func createGroup(name string, gid int) *user.Group {
 	return g
 }
 
-func EnsureGroup(group_name string, gid int, users []string) error {
+func EnsureGroup(group_name string, gid int, users []string, min_user_id int) error {
 
 	_, err := user.LookupGroup(group_name)
 
@@ -68,7 +73,7 @@ func EnsureGroup(group_name string, gid int, users []string) error {
 	system_users := usersInGroup(group_name)
 
 	addToGroup(group_name, string_array.Diff(system_users, users))
-	removeFromGroup(group_name, string_array.Diff(users, system_users))
+	removeFromGroup(group_name, string_array.Diff(users, system_users), min_user_id)
 
 	return nil
 }
@@ -83,6 +88,21 @@ func UserExists(username string) bool {
 	}
 
 	return true
+}
+
+func UserId(username string) int {
+	user, err := user.Lookup(username)
+
+	if err != nil {
+		return 0
+	}
+
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return 0
+	}
+
+	return uid
 }
 
 func EnsureUser(username string, uid int, comment string) error {
