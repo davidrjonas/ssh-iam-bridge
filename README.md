@@ -28,7 +28,7 @@ Resources
 Usage
 -----
 
-Create groups in AWS IAM with the prefix "system-" and "system-<role>-". These
+Create groups in AWS IAM with the prefix "system-" and "system-&lt;role&gt;-". These
 groups will be created on your servers. For instance, the IAM group
 "system-wheel" will be created as the "wheel" group on the system.
 
@@ -75,6 +75,7 @@ TODO
   the comment to get iam user)
 - [ ] Test with 2FA also enabled (like Duo Security or
   libpam-google-authenticator)
+- [ ] Organize iam*.go files
 
 Similar Projects
 ----------------
