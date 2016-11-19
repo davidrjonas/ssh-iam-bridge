@@ -41,44 +41,6 @@ func awsToUnixId(aws_id *string) int {
 	return UID_OFFSET + (int(data) / 2)
 }
 
-func syncGroups(prefix string) error {
-
-	role, err := GetIamRole()
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting IAM role (continuing), %s", err)
-	}
-
-	var prefixes []string
-
-	if role != "" {
-		prefixes = []string{prefix, prefix + role + "-"}
-	} else {
-		prefixes = []string{prefix}
-	}
-
-	groups, err := GetIamGroups(prefixes)
-
-	if err != nil {
-		return err
-	}
-
-	for _, group := range groups {
-		users, err := GetIamGroupUsers(group)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get IAM group users for group %s (continuing), %s", aws.StringValue(group.GroupName), err)
-			continue
-		}
-
-		err = unix.EnsureGroup(*group.GroupName, awsToUnixId(group.GroupId), iamUserNames(users), UID_OFFSET)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
 	keys, err := GetActiveSshPublicKeys(username)
