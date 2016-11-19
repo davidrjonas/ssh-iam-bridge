@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"sort"
 )
 
 func Contains(set []string, test string) bool {
@@ -55,6 +56,23 @@ func Diff(tests, set []string) []string {
 	}
 
 	return missing
+}
+
+func Unique(list []string) (result []string) {
+
+	sort.Strings(list)
+
+	var last string
+
+	for _, s := range list {
+		if s == last {
+			continue
+		}
+		last = s
+		result = append(result, s)
+	}
+
+	return
 }
 
 func WriteFile(filename string, string_sets ...[]string) error {
