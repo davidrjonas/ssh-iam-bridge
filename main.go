@@ -18,8 +18,13 @@ const NAME = "ssh-iam-bridge"
 const VERSION = "1.0.0"
 const PREFIX = "system-"
 
+const EX_EINVAL = 22
 const EX_TEMPFAIL = 75
 const EX_NOPERM = 77
+
+func getPrefix() string {
+	return PREFIX
+}
 
 func awsToUnixId(aws_id *string) int {
 	// Treat the last 2 bytes of a sha256 hash of aws_id as an uint and add it to 2000
@@ -111,7 +116,7 @@ func pamCreateUser() {
 
 	if username == "" {
 		os.Stderr.WriteString("Unable to find pam user in the environment\n")
-		os.Exit(EX_NOPERM)
+		os.Exit(EX_EINVAL)
 	}
 
 	if unix.UserExists(username) {
@@ -120,9 +125,8 @@ func pamCreateUser() {
 		os.Exit(EX_NOPERM)
 	}
 
-	// Ensure iam user
 	user, err := GetUser(username)
-	// TODO: (Create and) Handle user not found error
+
 	if err != nil {
 		panic(err)
 	}
@@ -133,7 +137,7 @@ func pamCreateUser() {
 		panic(err)
 	}
 
-	syncGroups(PREFIX)
+	syncGroups(getPrefix())
 
 	fmt.Println(NAME + ": Your user has been created but you must reconnect to for it to be active.")
 	fmt.Println(NAME + ": Connect again to log in to your account.")
@@ -169,7 +173,7 @@ func main() {
 	case authKeysCommand.FullCommand():
 		printAuthorizedKeys(*authKeysCommandUser)
 	case syncGroupsCommand.FullCommand():
-		syncGroups(PREFIX)
+		syncGroups(getPrefix())
 	case pamCreateUserCommand.FullCommand():
 		pamCreateUser()
 	}
