@@ -14,8 +14,12 @@ import (
 	"github.com/kardianos/osext"
 )
 
+const NAME = "ssh-iam-bridge"
 const VERSION = "1.0.0"
 const PREFIX = "system-"
+
+const EX_TEMPFAIL = 75
+const EX_NOPERM = 77
 
 func awsToUnixId(aws_id *string) int {
 	// Treat the last 2 bytes of a sha256 hash of aws_id as an uint and add it to 2000
@@ -35,7 +39,7 @@ func syncGroups(prefix string) error {
 	role, err := GetIamRole()
 
 	if err != nil {
-		// FIXME: Just log it.
+		fmt.Fprintf(os.Stderr, "Error getting IAM role (continuing), %s", err)
 	}
 
 	var prefixes []string
@@ -55,7 +59,7 @@ func syncGroups(prefix string) error {
 	for _, group := range groups {
 		users, err := GetIamGroupUsers(group)
 		if err != nil {
-			// FIXME: log it
+			fmt.Fprintf(os.Stderr, "Failed to get IAM group users for group %s (continuing), %s", aws.StringValue(group.GroupName), err)
 			continue
 		}
 
@@ -66,16 +70,6 @@ func syncGroups(prefix string) error {
 	}
 
 	return nil
-}
-
-func CreateUser(username string) error {
-	user, err := GetUser(username)
-
-	if err != nil {
-		return err
-	}
-
-	return unix.EnsureUser(username, awsToUnixId(user.UserId), aws.StringValue(user.Arn))
 }
 
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
@@ -112,8 +106,39 @@ func printAuthorizedKeys(username string) error {
 	return nil
 }
 
-func pamCreateUser() error {
-	return nil
+func pamCreateUser() {
+	username := os.Getenv("PAM_USER")
+
+	if username == "" {
+		os.Stderr.WriteString("Unable to find pam user in the environment\n")
+		os.Exit(EX_NOPERM)
+	}
+
+	if unix.UserExists(username) {
+		// Supposedly: Terminate the PAM authentication stack. The SSH client
+		// will fail since the user didn't supply a valid public key.
+		os.Exit(EX_NOPERM)
+	}
+
+	// Ensure iam user
+	user, err := GetUser(username)
+	// TODO: (Create and) Handle user not found error
+	if err != nil {
+		panic(err)
+	}
+
+	err = unix.EnsureUser(username, awsToUnixId(user.UserId), aws.StringValue(user.Arn))
+
+	if err != nil {
+		panic(err)
+	}
+
+	syncGroups(PREFIX)
+
+	fmt.Println(NAME + ": Your user has been created but you must reconnect to for it to be active.")
+	fmt.Println(NAME + ": Connect again to log in to your account.")
+
+	os.Exit(EX_TEMPFAIL)
 }
 
 func getSelfPath() string {
@@ -134,11 +159,6 @@ var (
 	testCommand          = kingpin.Command("test", "")
 )
 
-func runTest() error {
-	fmt.Println(getSelfPath())
-	return nil
-}
-
 func main() {
 
 	kingpin.Version(VERSION)
@@ -152,7 +172,5 @@ func main() {
 		syncGroups(PREFIX)
 	case pamCreateUserCommand.FullCommand():
 		pamCreateUser()
-	case testCommand.FullCommand():
-		runTest()
 	}
 }
