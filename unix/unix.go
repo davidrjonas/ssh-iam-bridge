@@ -70,7 +70,7 @@ func EnsureGroup(group_name string, gid int, users []string) error {
 	return nil
 }
 
-func userExists(username string) bool {
+func UserExists(username string) bool {
 	_, err := user.Lookup(username)
 
 	if _, ok := err.(user.UnknownUserError); ok {
@@ -83,7 +83,7 @@ func userExists(username string) bool {
 }
 
 func EnsureUser(username string, uid int, comment string) error {
-	if userExists(username) {
+	if UserExists(username) {
 		return nil
 	}
 
