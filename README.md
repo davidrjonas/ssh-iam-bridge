@@ -32,6 +32,12 @@ Create groups in AWS IAM with the prefix "system-" and "system-&lt;role&gt;-". T
 groups will be created on your servers. For instance, the IAM group
 "system-wheel" will be created as the "wheel" group on the system.
 
+When launching EC2 instances give them an IAM Role (instance profile) that
+includes read access to IAM. There is a predefined policy named
+`IAMReadOnlyAccess` that works well. Or, since this program uses the official
+[AWS SDK](https://aws.amazon.com/sdk-for-go/), it will search out credentials
+in the [usual places](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-config-files).
+
 Run `ssh-iam-bridge install` on your linux host. This does a few things: create
 a script for sshd AuthorizedKeysCommand to run, create a user under which the
 script is run, modify sshd_config to run the script, modify pam to create the
