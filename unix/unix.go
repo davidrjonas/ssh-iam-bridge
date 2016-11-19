@@ -11,6 +11,9 @@ import (
 
 func addToGroup(group string, names []string) {
 	for _, name := range names {
+		if !UserExists(name) {
+			continue
+		}
 		if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
 			panic(err)
 		}
