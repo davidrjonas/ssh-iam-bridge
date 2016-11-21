@@ -1,4 +1,4 @@
-package: github.com/davidrjonas/aws-iam-linux-sso
+package: github.com/davidrjonas/ssh-iam-bridge
 import:
 - package: github.com/aws/aws-sdk-go
 - package: gopkg.in/alecthomas/kingpin.v2
