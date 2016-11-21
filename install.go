@@ -13,9 +13,15 @@ import (
 )
 
 func check(err error) {
-	if err != nil {
-		panic(err)
+	if err == nil {
+		return
 	}
+
+	if exerr, ok := err.(*exec.ExitError); ok {
+		os.Stderr.Write(exerr.Stderr)
+	}
+
+	panic(err)
 }
 
 func backupFile(filename string) {
@@ -65,7 +71,8 @@ func installUser(username string) {
 		username,
 	}
 
-	check(exec.Command("useradd", args...).Run())
+	_, err = exec.Command("useradd", args...).Output()
+	check(err)
 }
 
 func installToSshd(cmd, username string) {
@@ -124,7 +131,7 @@ func installToPam(self_path string) {
 	filename := "/etc/pam.d/sshd"
 	fmt.Println("Updating", filename)
 
-	pam_exec := "auth requisite pam_exec.so stdout " + self_path + " pam_create_user\n"
+	pam_exec := "auth requisite pam_exec.so stdout quiet " + self_path + " pam_create_user\n"
 
 	lines := string_array.ReadFile(filename)
 
