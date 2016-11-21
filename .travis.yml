@@ -1,14 +1,22 @@
 language: go
 
 go:
-    - 1.7
+- 1.7
 
 before_install:
-    - go get github.com/Masterminds/glide
+- go get github.com/Masterminds/glide
 
 install:
-    - glide install
+- glide install
 
 script:
-    - go build
+- go build
 
+deploy:
+  provider: releases
+  api_key:
+    secure: iZ/AsIDE5POcgCmYKNBo+H1lbmy/ttG2zVP5bqBHmF9yh5wjOdaR6qKxfOMu+9ijRG5w/Tm3icGkFSZTyYGTBBKe6EI7qv9he/tF8mxhZD9940Wpf+gQS/zfy85riZGL8N+UpY7DkfNm7sfmgbSt/35EQOccFh+VF1FJYQuXhXw/EWr4O1sjbOzeXg7wjK8n5JaaSxjnlX/gJbcj4OZ9w2f9heBpyDqP5AGivhZsV8Gc1/idSILvVTe3etBr2Rn94Pxu7IsFQRH3i8r3PPEr9FWJ54csjxaEfbxuKhaMQoIyLFm1SEVmfJECT5VPYa2gYtTDqACgbrNOkbUDh2YjOnXelbzFA5d5nmPcqG3HURWpOAkkJwOcewP3zAC8weozxivsLQFCM85ULkoQI5YjH+mbV94jNY+55hIqnTpXHF01ldm0KYizA2kUm/R8BCFeiYbUHjQ6fM5lDr24G580FsdDYAjuITt9+ukV4Jv92/ALaWFvyIBQEbMJN6FEUN5yFeNjiLBQIcR5NI2Mgsuzk32K+Hmpn1UypZqWLyVoiDzZgcBdGk0hLlQNnDpA/eR9WTjVXf74L9zueS21IZNFR6HCjJyyEXnOtjrs0xkHafzBtjT4G/7yacdFWeJZwW4kmRbfJk+pxflVBvIFJoIF0HXxa7FLwwf244zKxUh/XuI=
+  file: 'ssh-iam-bridge'
+  on:
+    repo: davidrjonas/ssh-iam-bridge
+    tags: true
