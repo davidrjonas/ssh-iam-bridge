@@ -16,7 +16,7 @@ import (
 
 const NAME = "ssh-iam-bridge"
 const VERSION = "1.0.0"
-const PREFIX = "system-"
+const PREFIX = "server-"
 
 const EX_EINVAL = 22
 const EX_TEMPFAIL = 75
