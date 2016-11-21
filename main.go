@@ -95,7 +95,7 @@ func pamCreateUser() {
 		panic(err)
 	}
 
-	err = unix.EnsureUser(username, awsToUnixId(user.UserId), aws.StringValue(user.Arn))
+	err = unix.EnsureUser(username, awsToUnixId(user.UserId), "iam="+aws.StringValue(user.UserId))
 
 	if err != nil {
 		panic(err)
