@@ -1,6 +1,7 @@
 package unix
 
 import (
+	"os"
 	"os/exec"
 	"os/user"
 	"strconv"
@@ -119,6 +120,12 @@ func EnsureUser(username string, uid int, comment string) error {
 		username,
 	}
 
-	// TODO: wrap error
-	return exec.Command("useradd", args...).Run()
+	out, err := exec.Command("useradd", args...).Output()
+	if err != nil {
+		os.Stderr.Write(out)
+		if exerr, ok := err.(*exec.ExitError); ok {
+			os.Stderr.Write(exerr.Stderr)
+		}
+		panic(err)
+	}
 }
