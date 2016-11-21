@@ -128,4 +128,6 @@ func EnsureUser(username string, uid int, comment string) error {
 		}
 		panic(err)
 	}
+
+	return nil
 }
