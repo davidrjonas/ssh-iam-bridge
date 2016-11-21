@@ -119,12 +119,11 @@ func getSelfPath() string {
 
 var (
 	installCommand       = kingpin.Command("install", "Install this program to authenticate SSH connections and create users")
-	installCommandUser   = installCommand.Arg("user", "The user under which to run the AuthorizedKeysCommand, will be created if it doesn't exit").String()
+	installCommandUser   = installCommand.Arg("user", "The user under which to run the AuthorizedKeysCommand, will be created if it doesn't exit").Default("ssh-iam-bridge").String()
 	authKeysCommand      = kingpin.Command("authorized_keys", "Get the authorized_keys from IAM for user")
 	authKeysCommandUser  = authKeysCommand.Arg("user", "The IAM username for which to get keys").Required().String()
 	syncGroupsCommand    = kingpin.Command("sync_groups", "Sync the IAM groups with the local system groups")
 	pamCreateUserCommand = kingpin.Command("pam_create_user", "Create a user from the env during the sshd pam phase")
-	testCommand          = kingpin.Command("test", "")
 )
 
 func main() {
