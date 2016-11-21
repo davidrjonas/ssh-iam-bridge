@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/davidrjonas/ssh-iam-bridge/directory"
 	"github.com/davidrjonas/ssh-iam-bridge/string_array"
 	"github.com/davidrjonas/ssh-iam-bridge/unix"
 )
@@ -27,7 +28,7 @@ func removePrefix(s string, prefixes []string) (string, string) {
 
 func syncGroups(prefix string) error {
 
-	role, err := GetIamRole()
+	role, err := directory.GetRole()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting IAM role (continuing), %s", err)
@@ -41,7 +42,7 @@ func syncGroups(prefix string) error {
 		prefixes = []string{prefix}
 	}
 
-	groups, err := GetIamGroups(prefixes)
+	groups, err := directory.GetGroups(prefixes)
 
 	if err != nil {
 		return err
@@ -51,13 +52,13 @@ func syncGroups(prefix string) error {
 	var group_map map[string]CombinedGroup
 
 	for _, group := range groups {
-		users, err := GetIamGroupUsers(group)
+		users, err := directory.GetGroupUsers(group)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get IAM group users for group %s (continuing), %s", aws.StringValue(group.GroupName), err)
 			continue
 		}
 
-		usernames := iamUserNames(users)
+		usernames := directory.UserNames(users)
 
 		name, _ := removePrefix(aws.StringValue(group.GroupName), prefixes)
 

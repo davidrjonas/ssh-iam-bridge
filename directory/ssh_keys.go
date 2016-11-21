@@ -1,4 +1,4 @@
-package main
+package directory
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,7 +32,7 @@ func GetActiveSshPublicKeys(username string) ([]*iam.SSHPublicKeyMetadata, error
 	return onlyActiveKeys(resp.SSHPublicKeys), nil
 }
 
-func GetSshEncodePublicKey(username, key_id *string) (*string, error) {
+func GetSshEncodedPublicKey(username, key_id *string) (*string, error) {
 
 	svc := getIamService()
 

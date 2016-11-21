@@ -1,4 +1,4 @@
-package main
+package directory
 
 import (
 	"strings"
@@ -28,7 +28,7 @@ func filterGroups(groups []*iam.Group, cb func(*iam.Group) bool) []*iam.Group {
 	return filtered
 }
 
-func GetIamGroups(prefixes []string) ([]*iam.Group, error) {
+func GetGroups(prefixes []string) ([]*iam.Group, error) {
 
 	svc := getIamService()
 
@@ -43,7 +43,7 @@ func GetIamGroups(prefixes []string) ([]*iam.Group, error) {
 	}), nil
 }
 
-func GetIamGroupUsers(group *iam.Group) ([]*iam.User, error) {
+func GetGroupUsers(group *iam.Group) ([]*iam.User, error) {
 
 	svc := getIamService()
 

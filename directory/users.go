@@ -1,11 +1,11 @@
-package main
+package directory
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-func iamUserNames(users []*iam.User) []string {
+func UserNames(users []*iam.User) []string {
 	names := make([]string, len(users))
 	for idx, u := range users {
 		names[idx] = aws.StringValue(u.UserName)

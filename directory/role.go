@@ -1,4 +1,4 @@
-package main
+package directory
 
 import (
 	"encoding/json"
@@ -42,7 +42,7 @@ func parseArn(arn string) ARN {
 //  "InstanceProfileArn" : "arn:aws:iam::756413706286:instance-profile/bastion",
 //  "InstanceProfileId" : "AIPAIHHSYB75V3MLIVTG6"
 //}
-func GetIamRole() (string, error) {
+func GetRole() (string, error) {
 	resp, err := http.Get("http://169.254.169.254/latest/meta-data/iam/info")
 	if err != nil {
 		return "", err

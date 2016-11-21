@@ -10,6 +10,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/davidrjonas/ssh-iam-bridge/directory"
 	"github.com/davidrjonas/ssh-iam-bridge/unix"
 	"github.com/kardianos/osext"
 )
@@ -43,7 +44,7 @@ func awsToUnixId(aws_id *string) int {
 
 func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
-	keys, err := GetActiveSshPublicKeys(username)
+	keys, err := directory.GetActiveSshPublicKeys(username)
 
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
 	for _, key := range keys {
 
-		body, err := GetSshEncodePublicKey(key.UserName, key.SSHPublicKeyId)
+		body, err := directory.GetSshEncodedPublicKey(key.UserName, key.SSHPublicKeyId)
 
 		if err != nil {
 			return nil, err
@@ -92,7 +93,7 @@ func pamCreateUser() {
 		os.Exit(EX_NOPERM)
 	}
 
-	user, err := GetUser(username)
+	user, err := directory.GetUser(username)
 
 	if err != nil {
 		panic(err)
