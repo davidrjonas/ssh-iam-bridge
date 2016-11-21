@@ -83,6 +83,9 @@ func pamCreateUser() {
 		os.Exit(EX_EINVAL)
 	}
 
+	// PATH is not set when called from pam.
+	os.Setenv("PATH", "/usr/sbin:/usr/bin:/bin:/sbin")
+
 	if unix.UserExists(username) {
 		// Supposedly: Terminate the PAM authentication stack. The SSH client
 		// will fail since the user didn't supply a valid public key.
