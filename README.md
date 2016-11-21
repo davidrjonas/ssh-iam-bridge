@@ -1,6 +1,9 @@
 AWS IAM/SSH Bridge
 ==================
 
+[![Build Status](https://travis-ci.org/davidrjonas/ssh-iam-bridge.svg)](https://travis-ci.org/davidrjonas/ssh-iam-bridge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/davidrjonas/ssh-iam-bridge)](https://goreportcard.com/report/github.com/davidrjonas/ssh-iam-bridge)
+
 ssh-iam-bridge lets you use the SSH public keys stored in AWS IAM to
 authenticate users on linux hosts.
 
@@ -24,6 +27,7 @@ Resources
 
 - http://man.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man5/sshd_config.5
 - http://www.linux-pam.org/Linux-PAM-html/sag-pam_exec.html
+- https://github.com/hashicorp/vault-ssh-helper
 
 Usage
 -----
