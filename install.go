@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/davidrjonas/ssh-iam-bridge/string_array"
+	"github.com/davidrjonas/ssh-iam-bridge/strarray"
 )
 
 func check(err error) {
@@ -88,9 +88,9 @@ func installToSshd(cmd, username string) {
 		"AuthenticationMethods publickey keyboard-interactive:pam,publickey\n",
 	}
 
-	lines := string_array.ReadFile(filename)
+	lines := strarray.ReadFile(filename)
 
-	if string_array.ContainsAll(lines, linesToAdd) {
+	if strarray.ContainsAll(lines, linesToAdd) {
 		return
 	}
 
@@ -114,7 +114,7 @@ func installToSshd(cmd, username string) {
 
 	backupFile(filename)
 
-	check(string_array.WriteFile(filename, lines, linesToAdd))
+	check(strarray.WriteFile(filename, lines, linesToAdd))
 
 	err := exec.Command("sshd", "-t").Run()
 
@@ -135,7 +135,7 @@ func installToPam(selfPath string) {
 
 	pamExec := "auth requisite pamExec.so stdout quiet " + selfPath + " pam_create_user\n"
 
-	lines := string_array.ReadFile(filename)
+	lines := strarray.ReadFile(filename)
 
 	for _, line := range lines {
 		if line == pamExec {
@@ -144,7 +144,7 @@ func installToPam(selfPath string) {
 	}
 
 	backupFile(filename)
-	check(string_array.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines))
+	check(strarray.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines))
 }
 
 func installToCron(selfPath string) {

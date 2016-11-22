@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/davidrjonas/ssh-iam-bridge/directory"
-	"github.com/davidrjonas/ssh-iam-bridge/string_array"
+	"github.com/davidrjonas/ssh-iam-bridge/strarray"
 	"github.com/davidrjonas/ssh-iam-bridge/unix"
 )
 
@@ -64,7 +64,7 @@ func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]combinedG
 		if _, ok := combined[name]; ok {
 			cg := combined[name]
 			cg.Sources = append(cg.Sources, group)
-			cg.Users = string_array.Unique(append(cg.Users, usernames...))
+			cg.Users = strarray.Unique(append(cg.Users, usernames...))
 		} else {
 			combined[name] = combinedGroup{
 				Sources: []*iam.Group{group},
@@ -85,15 +85,15 @@ func ensureGroup(name string, gid int, users []string) error {
 		return err
 	}
 
-	users = string_array.Filter(users, unix.UserExists)
-	systemUsers := string_array.Filter(unix.UsersInGroup(name), isManagedUser)
+	users = strarray.Filter(users, unix.UserExists)
+	systemUsers := strarray.Filter(unix.UsersInGroup(name), isManagedUser)
 
-	for _, username := range string_array.Diff(users, systemUsers) {
+	for _, username := range strarray.Diff(users, systemUsers) {
 		fmt.Println("Adding", username, "to group", name)
 		unix.AddToGroup(name, username)
 	}
 
-	for _, username := range string_array.Diff(systemUsers, users) {
+	for _, username := range strarray.Diff(systemUsers, users) {
 		fmt.Println("Removing", username, "from group", name)
 		unix.RemoveFromGroup(name, username)
 	}

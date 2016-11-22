@@ -1,4 +1,4 @@
-package string_array
+package strarray
 
 import (
 	"bufio"
