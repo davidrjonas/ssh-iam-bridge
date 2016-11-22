@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Changed
+- Changed PATH in pam to match `getconf PATH`
 - Replaced panic()s with better error messages
 - Added this change log
 
