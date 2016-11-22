@@ -16,10 +16,10 @@ type ARN struct {
 }
 
 type IamInfo struct {
-	Code               string `json:Code`
-	LastUpdatee        string `json:LastUpdated`
-	InstanceProfileArn string `json:InstanceProfileArn`
-	InstanceProfileId  string `json:InstanceProfileId`
+	Code               string `json:"Code"`
+	LastUpdatee        string `json:"LastUpdated"`
+	InstanceProfileArn string `json:"InstanceProfileArn"`
+	InstanceProfileId  string `json:"InstanceProfileId"`
 }
 
 func parseArn(arn string) ARN {
