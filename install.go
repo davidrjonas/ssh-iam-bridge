@@ -31,23 +31,23 @@ func backupFile(filename string) {
 }
 
 func install(selfPath, username string) {
-	cmd_name := installAuthorizedKeysCommandScript(selfPath)
+	cmdName := installAuthorizedKeysCommandScript(selfPath)
 	installUser(username)
-	installToSshd(cmd_name, username)
+	installToSshd(cmdName, username)
 	installToPam(selfPath)
 	installToCron(selfPath)
 }
 
 // ssh is picky about AuthorizedKeysCommand, see man sshd_config
 func installAuthorizedKeysCommandScript(selfPath string) string {
-	cmd_name := "/usr/sbin/ssh-iam-bridge-public-keys"
-	fmt.Println("Writing AuthorizedKeysCommand script", cmd_name)
+	cmdName := "/usr/sbin/ssh-iam-bridge-public-keys"
+	fmt.Println("Writing AuthorizedKeysCommand script", cmdName)
 
 	script := fmt.Sprintf("#!/bin/sh\nexec %s authorized_keys \"$@\"\n", selfPath)
 
-	check(ioutil.WriteFile(cmd_name, []byte(script), 0755))
+	check(ioutil.WriteFile(cmdName, []byte(script), 0755))
 
-	return cmd_name
+	return cmdName
 }
 
 func installUser(username string) {
