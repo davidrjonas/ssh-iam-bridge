@@ -1,29 +1,26 @@
 package unix
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 	"strconv"
 	"strings"
-
-	"github.com/davidrjonas/ssh-iam-bridge/string_array"
 )
 
-func addToGroup(group string, name string) {
+func AddToGroup(group string, name string) {
 	if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
 		panic(err)
 	}
 }
 
-func removeFromGroup(group string, name string) {
+func RemoveFromGroup(group string, name string) {
 	if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
 		panic(err)
 	}
 }
 
-func usersInGroup(name string) []string {
+func UsersInGroup(name string) []string {
 
 	out, err := exec.Command("getent", "group", name).Output()
 
@@ -50,13 +47,7 @@ func createGroup(name string, gid int) *user.Group {
 	return g
 }
 
-func isManagedUser(min_user_id int) func(name string) bool {
-	return func(name string) bool {
-		return UserId(name) >= min_user_id
-	}
-}
-
-func EnsureGroup(group_name string, gid int, users []string, min_user_id int) error {
+func EnsureGroup(group_name string, gid int) error {
 
 	_, err := user.LookupGroup(group_name)
 
@@ -64,19 +55,6 @@ func EnsureGroup(group_name string, gid int, users []string, min_user_id int) er
 		createGroup(group_name, gid)
 	} else if err != nil {
 		return err
-	}
-
-	users = string_array.Filter(users, UserExists)
-	system_users := string_array.Filter(usersInGroup(group_name), isManagedUser(min_user_id))
-
-	for _, name := range string_array.Diff(users, system_users) {
-		fmt.Println("Adding", name, "to group", group_name)
-		addToGroup(group_name, name)
-	}
-
-	for _, name := range string_array.Diff(system_users, users) {
-		fmt.Println("Removing", name, "from group", group_name)
-		removeFromGroup(group_name, name)
 	}
 
 	return nil

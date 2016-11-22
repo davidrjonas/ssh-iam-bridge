@@ -26,30 +26,28 @@ func removePrefix(s string, prefixes []string) (string, string) {
 	return s, ""
 }
 
-func syncGroups(prefix string) error {
+func groupIdForGroups(groups []*iam.Group) int {
 
-	role, err := directory.GetRole()
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting IAM role (continuing), %s", err)
+	if len(groups) == 1 {
+		return awsToUnixId(groups[0].GroupId)
 	}
 
-	var prefixes []string
+	// Use the shortest group name as the group id
+	var minGroup *iam.Group
 
-	if role != "" {
-		prefixes = []string{prefix, prefix + role + "-"}
-	} else {
-		prefixes = []string{prefix}
+	min := 9999
+	for _, group := range groups {
+		l := len(aws.StringValue(group.GroupName))
+		if l < min {
+			min = l
+			minGroup = group
+		}
 	}
 
-	groups, err := directory.GetGroups(prefixes)
+	return awsToUnixId(minGroup.GroupId)
+}
 
-	if err != nil {
-		return err
-	}
-
-	// Coalesce
-	combined := make(map[string]CombinedGroup, 0)
+func coalesceGroups(groups []*iam.Group, prefixes []string) (combined map[string]CombinedGroup) {
 
 	for _, group := range groups {
 		users, err := directory.GetGroupUsers(group)
@@ -74,31 +72,59 @@ func syncGroups(prefix string) error {
 		}
 	}
 
-	for name, cg := range combined {
-		var gid int
+	return
+}
 
-		if len(cg.Sources) == 1 {
-			gid = awsToUnixId(cg.Sources[0].GroupId)
-		} else {
-			// Use the shortest group name as the group id
-			var source *iam.Group
+func isManagedUser(name string) bool {
+	return unix.UserId(name) >= UID_OFFSET
+}
 
-			min := 9999
-			for _, g := range cg.Sources {
-				l := len(aws.StringValue(g.GroupName))
-				if l < min {
-					min = l
-					source = g
-				}
-			}
+func ensureGroup(name string, gid int, users []string) error {
+	if err := unix.EnsureGroup(name, gid); err != nil {
+		return err
+	}
 
-			gid = awsToUnixId(source.GroupId)
-		}
+	users = string_array.Filter(users, unix.UserExists)
+	system_users := string_array.Filter(unix.UsersInGroup(name), isManagedUser)
 
-		err = unix.EnsureGroup(name, gid, cg.Users, UID_OFFSET)
+	for _, username := range string_array.Diff(users, system_users) {
+		fmt.Println("Adding", username, "to group", name)
+		unix.AddToGroup(name, username)
+	}
 
-		if err != nil {
-			return err
+	for _, username := range string_array.Diff(system_users, users) {
+		fmt.Println("Removing", username, "from group", name)
+		unix.RemoveFromGroup(name, username)
+	}
+
+	return nil
+}
+
+func syncGroups(prefix string) error {
+
+	role, err := directory.GetRole()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting IAM role (continuing), %s", err)
+	}
+
+	var prefixes []string
+
+	if role != "" {
+		prefixes = []string{prefix, prefix + role + "-"}
+	} else {
+		prefixes = []string{prefix}
+	}
+
+	groups, err := directory.GetGroups(prefixes)
+
+	if err != nil {
+		return err
+	}
+
+	for name, cg := range coalesceGroups(groups, prefixes) {
+		if err := ensureGroup(name, groupIdForGroups(cg.Sources), cg.Users); err != nil {
+			panic(err)
 		}
 	}
 
