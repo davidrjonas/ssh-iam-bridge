@@ -1,6 +1,7 @@
 package unix
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
@@ -10,27 +11,15 @@ import (
 	"github.com/davidrjonas/ssh-iam-bridge/string_array"
 )
 
-func addToGroup(group string, names []string) {
-	for _, name := range names {
-		if !UserExists(name) {
-			continue
-		}
-		if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
-			panic(err)
-		}
+func addToGroup(group string, name string) {
+	if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
+		panic(err)
 	}
 }
 
-func removeFromGroup(group string, names []string, min_user_id int) {
-	for _, name := range names {
-		// don't remove users with ids lower than our min_user_id
-		if UserId(name) < min_user_id {
-			continue
-		}
-
-		if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
-			panic(err)
-		}
+func removeFromGroup(group string, name string) {
+	if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
+		panic(err)
 	}
 }
 
@@ -61,6 +50,12 @@ func createGroup(name string, gid int) *user.Group {
 	return g
 }
 
+func isManagedUser(min_user_id int) func(name string) bool {
+	return func(name string) bool {
+		return UserId(name) >= min_user_id
+	}
+}
+
 func EnsureGroup(group_name string, gid int, users []string, min_user_id int) error {
 
 	_, err := user.LookupGroup(group_name)
@@ -71,10 +66,18 @@ func EnsureGroup(group_name string, gid int, users []string, min_user_id int) er
 		return err
 	}
 
-	system_users := usersInGroup(group_name)
+	users = string_array.Filter(users, UserExists)
+	system_users := string_array.Filter(usersInGroup(group_name), isManagedUser(min_user_id))
 
-	addToGroup(group_name, string_array.Diff(system_users, users))
-	removeFromGroup(group_name, string_array.Diff(users, system_users), min_user_id)
+	for _, name := range string_array.Diff(users, system_users) {
+		fmt.Println("Adding", name, "to group", group_name)
+		addToGroup(group_name, name)
+	}
+
+	for _, name := range string_array.Diff(system_users, users) {
+		fmt.Println("Removing", name, "from group", group_name)
+		removeFromGroup(group_name, name)
+	}
 
 	return nil
 }
