@@ -30,20 +30,20 @@ func backupFile(filename string) {
 	check(err)
 }
 
-func install(self_path, username string) {
-	cmd_name := installAuthorizedKeysCommandScript(self_path)
+func install(selfPath, username string) {
+	cmd_name := installAuthorizedKeysCommandScript(selfPath)
 	installUser(username)
 	installToSshd(cmd_name, username)
-	installToPam(self_path)
-	installToCron(self_path)
+	installToPam(selfPath)
+	installToCron(selfPath)
 }
 
 // ssh is picky about AuthorizedKeysCommand, see man sshd_config
-func installAuthorizedKeysCommandScript(self_path string) string {
+func installAuthorizedKeysCommandScript(selfPath string) string {
 	cmd_name := "/usr/sbin/ssh-iam-bridge-public-keys"
 	fmt.Println("Writing AuthorizedKeysCommand script", cmd_name)
 
-	script := fmt.Sprintf("#!/bin/sh\nexec %s authorized_keys \"$@\"\n", self_path)
+	script := fmt.Sprintf("#!/bin/sh\nexec %s authorized_keys \"$@\"\n", selfPath)
 
 	check(ioutil.WriteFile(cmd_name, []byte(script), 0755))
 
@@ -78,6 +78,8 @@ func installUser(username string) {
 func installToSshd(cmd, username string) {
 
 	filename := "/etc/ssh/sshd_config"
+
+	// TODO: Ensure 'PasswordAuthentication no' and 'UsePAM yes'
 
 	lines_to_add := []string{
 		"AuthorizedKeysCommand " + cmd + "\n",
@@ -126,12 +128,12 @@ func installToSshd(cmd, username string) {
 	}
 }
 
-func installToPam(self_path string) {
+func installToPam(selfPath string) {
 
 	filename := "/etc/pam.d/sshd"
 	fmt.Println("Updating", filename)
 
-	pam_exec := "auth requisite pam_exec.so stdout quiet " + self_path + " pam_create_user\n"
+	pam_exec := "auth requisite pam_exec.so stdout quiet " + selfPath + " pam_create_user\n"
 
 	lines := string_array.ReadFile(filename)
 
@@ -142,16 +144,16 @@ func installToPam(self_path string) {
 	}
 
 	backupFile(filename)
-	check(string_array.WriteFile(filename, []string{"# Next line added by " + self_path + "\n", pam_exec}, lines))
+	check(string_array.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pam_exec}, lines))
 }
 
-func installToCron(self_path string) {
+func installToCron(selfPath string) {
 
-	filename := "/etc/cron.d/" + path.Base(self_path)
+	filename := "/etc/cron.d/" + path.Base(selfPath)
 
 	fmt.Println("Installing crontab", filename)
 
-	contents := "*/10 * * * * root " + self_path + " sync_groups"
+	contents := "*/10 * * * * root " + selfPath + " sync_groups"
 
 	check(ioutil.WriteFile(filename, []byte(contents), 0644))
 }
