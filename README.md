@@ -85,7 +85,6 @@ TODO
   the comment to get iam user)
 - [ ] Test with 2FA also enabled (like Duo Security or
   libpam-google-authenticator)
-- [ ] Organize iam*.go files
 
 Similar Projects
 ----------------
