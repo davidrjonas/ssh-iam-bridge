@@ -29,9 +29,9 @@ func getPrefix() string {
 	return PREFIX
 }
 
-func awsToUnixId(aws_id *string) int {
-	// Treat the last 2 bytes of a sha256 hash of aws_id as an uint and add it to 2000
-	b := []byte(*aws_id)
+func awsToUnixID(awsID *string) int {
+	// Treat the last 2 bytes of a sha256 hash of awsId as an uint and add it to 2000
+	b := []byte(*awsID)
 
 	hasher := sha256.New()
 	hasher.Write(b)
@@ -42,7 +42,7 @@ func awsToUnixId(aws_id *string) int {
 	return UID_OFFSET + (int(data) / 2)
 }
 
-func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
+func getAuthorizedKeys(username string) (*bytes.Buffer, error) {
 
 	keys, err := directory.GetActiveSshPublicKeys(username)
 
@@ -68,7 +68,7 @@ func GetAuthorizedKeys(username string) (*bytes.Buffer, error) {
 }
 
 func printAuthorizedKeys(username string) error {
-	buf, err := GetAuthorizedKeys(username)
+	buf, err := getAuthorizedKeys(username)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func pamCreateUser() {
 		panic(err)
 	}
 
-	err = unix.EnsureUser(username, awsToUnixId(user.UserId), "iam="+aws.StringValue(user.UserId))
+	err = unix.EnsureUser(username, awsToUnixID(user.UserId), "iam="+aws.StringValue(user.UserId))
 
 	if err != nil {
 		panic(err)

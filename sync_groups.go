@@ -12,7 +12,7 @@ import (
 	"github.com/davidrjonas/ssh-iam-bridge/unix"
 )
 
-type CombinedGroup struct {
+type combinedGroup struct {
 	Sources []*iam.Group
 	Users   []string
 }
@@ -26,10 +26,10 @@ func removePrefix(s string, prefixes []string) (string, string) {
 	return s, ""
 }
 
-func groupIdForGroups(groups []*iam.Group) int {
+func groupIDForGroups(groups []*iam.Group) int {
 
 	if len(groups) == 1 {
-		return awsToUnixId(groups[0].GroupId)
+		return awsToUnixID(groups[0].GroupId)
 	}
 
 	// Use the shortest group name as the group id
@@ -44,11 +44,11 @@ func groupIdForGroups(groups []*iam.Group) int {
 		}
 	}
 
-	return awsToUnixId(minGroup.GroupId)
+	return awsToUnixID(minGroup.GroupId)
 }
 
-func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]CombinedGroup {
-	combined := make(map[string]CombinedGroup, 0)
+func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]combinedGroup {
+	combined := make(map[string]combinedGroup, 0)
 
 	for _, group := range groups {
 		users, err := directory.GetGroupUsers(group)
@@ -66,7 +66,7 @@ func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]CombinedG
 			cg.Sources = append(cg.Sources, group)
 			cg.Users = string_array.Unique(append(cg.Users, usernames...))
 		} else {
-			combined[name] = CombinedGroup{
+			combined[name] = combinedGroup{
 				Sources: []*iam.Group{group},
 				Users:   usernames,
 			}
@@ -86,14 +86,14 @@ func ensureGroup(name string, gid int, users []string) error {
 	}
 
 	users = string_array.Filter(users, unix.UserExists)
-	system_users := string_array.Filter(unix.UsersInGroup(name), isManagedUser)
+	systemUsers := string_array.Filter(unix.UsersInGroup(name), isManagedUser)
 
-	for _, username := range string_array.Diff(users, system_users) {
+	for _, username := range string_array.Diff(users, systemUsers) {
 		fmt.Println("Adding", username, "to group", name)
 		unix.AddToGroup(name, username)
 	}
 
-	for _, username := range string_array.Diff(system_users, users) {
+	for _, username := range string_array.Diff(systemUsers, users) {
 		fmt.Println("Removing", username, "from group", name)
 		unix.RemoveFromGroup(name, username)
 	}
@@ -124,7 +124,7 @@ func syncGroups(prefix string) error {
 	}
 
 	for name, cg := range coalesceGroups(groups, prefixes) {
-		if err := ensureGroup(name, groupIdForGroups(cg.Sources), cg.Users); err != nil {
+		if err := ensureGroup(name, groupIDForGroups(cg.Sources), cg.Users); err != nil {
 			panic(err)
 		}
 	}
