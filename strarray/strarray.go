@@ -108,12 +108,12 @@ func WriteFile(filename string, stringList ...[]string) error {
 	return nil
 }
 
-func ReadFile(filename string) (lines []string) {
+func ReadFile(filename string) ([]string, error) {
 
 	file, err := os.Open(filename)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	defer file.Close()
@@ -121,6 +121,7 @@ func ReadFile(filename string) (lines []string) {
 	reader := bufio.NewReader(file)
 
 	var line string
+	var lines []string
 
 	for {
 		if line, err = reader.ReadString('\n'); err != nil {
@@ -131,8 +132,8 @@ func ReadFile(filename string) (lines []string) {
 	}
 
 	if err != io.EOF {
-		panic(err)
+		return nil, err
 	}
 
-	return lines
+	return lines, err
 }

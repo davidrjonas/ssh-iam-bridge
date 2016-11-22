@@ -1,6 +1,7 @@
 package unix
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
@@ -8,43 +9,43 @@ import (
 	"strings"
 )
 
-func AddToGroup(group string, name string) {
+func AddToGroup(group string, name string) error {
 	if err := exec.Command("usermod", "-a", "-G", group, name).Run(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func RemoveFromGroup(group string, name string) {
+func RemoveFromGroup(group string, name string) error {
 	if err := exec.Command("gpasswd", "-d", name, group).Run(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func UsersInGroup(name string) []string {
+func UsersInGroup(name string) ([]string, error) {
 
 	out, err := exec.Command("getent", "group", name).Output()
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	parts := strings.Split(strings.TrimSpace(string(out)), ":")
 	users := strings.Split(parts[3], ",")
 
-	return users
+	return users, nil
 }
 
-func createGroup(name string, gid int) *user.Group {
+func createGroup(name string, gid int) error {
 	// Both exec.Command and user.LookupGroupId want a string
 	id := strconv.Itoa(gid)
 
 	if err := exec.Command("groupadd", "--gid", id, name).Run(); err != nil {
-		panic(err)
+		return err
 	}
 
-	g, _ := user.LookupGroupId(id)
-
-	return g
+	return nil
 }
 
 func EnsureGroup(groupName string, gid int) error {
@@ -52,7 +53,9 @@ func EnsureGroup(groupName string, gid int) error {
 	_, err := user.LookupGroup(groupName)
 
 	if _, ok := err.(user.UnknownGroupError); ok {
-		createGroup(groupName, gid)
+		if err = createGroup(groupName, gid); err != nil {
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
@@ -66,7 +69,8 @@ func UserExists(username string) bool {
 	if _, ok := err.(user.UnknownUserError); ok {
 		return false
 	} else if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to check if user '%s' exists; %s", username, err)
+		os.Exit(1)
 	}
 
 	return true
@@ -107,7 +111,7 @@ func EnsureUser(username string, uid int, comment string) error {
 		if exerr, ok := err.(*exec.ExitError); ok {
 			os.Stderr.Write(exerr.Stderr)
 		}
-		panic(err)
+		os.Exit(1)
 	}
 
 	return nil

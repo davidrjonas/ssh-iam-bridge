@@ -85,17 +85,28 @@ func ensureGroup(name string, gid int, users []string) error {
 		return err
 	}
 
+	systemUsers, err := unix.UsersInGroup(name)
+	if err != nil {
+		return err
+	}
+
 	users = strarray.Filter(users, unix.UserExists)
-	systemUsers := strarray.Filter(unix.UsersInGroup(name), isManagedUser)
+	systemUsers = strarray.Filter(systemUsers, isManagedUser)
 
 	for _, username := range strarray.Diff(users, systemUsers) {
 		fmt.Println("Adding", username, "to group", name)
-		unix.AddToGroup(name, username)
+		if err = unix.AddToGroup(name, username); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to add user '%s' to group '%s'; %s", username, name, err)
+			os.Exit(1)
+		}
 	}
 
 	for _, username := range strarray.Diff(systemUsers, users) {
 		fmt.Println("Removing", username, "from group", name)
-		unix.RemoveFromGroup(name, username)
+		if err = unix.RemoveFromGroup(name, username); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to remove user '%s' from group '%s'; %s", username, name, err)
+			os.Exit(1)
+		}
 	}
 
 	return nil
@@ -125,7 +136,8 @@ func syncGroups(prefix string) error {
 
 	for name, cg := range coalesceGroups(groups, prefixes) {
 		if err := ensureGroup(name, groupIDForGroups(cg.Sources), cg.Users); err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Failed to add group '%s'; %s", name, err)
+			os.Exit(1)
 		}
 	}
 

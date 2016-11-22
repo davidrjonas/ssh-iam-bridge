@@ -1,6 +1,9 @@
 package directory
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -16,7 +19,8 @@ func getIamService() *iam.IAM {
 	sess, err := session.NewSession()
 
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to start a new AWS session; %s", err)
+		os.Exit(1)
 	}
 
 	iamSvc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})

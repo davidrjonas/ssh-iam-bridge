@@ -98,13 +98,15 @@ func pamCreateUser() {
 	user, err := directory.GetUser(username)
 
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to IAM user '%s'; %s", username, err)
+		os.Exit(1)
 	}
 
 	err = unix.EnsureUser(username, awsToUnixID(user.UserId), "iam="+aws.StringValue(user.UserId))
 
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to create user '%s'; %s", username, err)
+		os.Exit(1)
 	}
 
 	syncGroups(getPrefix())
@@ -118,7 +120,8 @@ func pamCreateUser() {
 func getSelfPath() string {
 	self, err := osext.Executable()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to determine path to executable; %s", err)
+		os.Exit(1)
 	}
 	return self
 }

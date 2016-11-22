@@ -12,7 +12,7 @@ import (
 	"github.com/davidrjonas/ssh-iam-bridge/strarray"
 )
 
-func check(err error) {
+func check(err error, failureMessage string) {
 	if err == nil {
 		return
 	}
@@ -21,13 +21,14 @@ func check(err error) {
 		os.Stderr.Write(exerr.Stderr)
 	}
 
-	panic(err)
+	fmt.Fprintln(os.Stderr, "!!!", failureMessage)
+	os.Exit(1)
 }
 
 func backupFile(filename string) {
 	fmt.Println("Backing up", filename, "to", filename+".orig")
 	err := exec.Command("cp", "-f", filename, filename+".orig").Run()
-	check(err)
+	check(err, "Failed to backup "+filename)
 }
 
 func install(selfPath, username string) {
@@ -45,7 +46,7 @@ func installAuthorizedKeysCommandScript(selfPath string) string {
 
 	script := fmt.Sprintf("#!/bin/sh\nexec %s authorized_keys \"$@\"\n", selfPath)
 
-	check(ioutil.WriteFile(cmdName, []byte(script), 0755))
+	check(ioutil.WriteFile(cmdName, []byte(script), 0755), "Failed to write script"+cmdName)
 
 	return cmdName
 }
@@ -59,7 +60,8 @@ func installUser(username string) {
 	}
 
 	if _, ok := err.(user.UnknownUserError); !ok {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to lookup user '%s'; %s", username, err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Creating SSH authorized keys lookup user", username)
@@ -72,7 +74,7 @@ func installUser(username string) {
 	}
 
 	_, err = exec.Command("useradd", args...).Output()
-	check(err)
+	check(err, "Failed to create authorized keys lookup user")
 }
 
 func installToSshd(cmd, username string) {
@@ -88,7 +90,11 @@ func installToSshd(cmd, username string) {
 		"AuthenticationMethods publickey keyboard-interactive:pam,publickey\n",
 	}
 
-	lines := strarray.ReadFile(filename)
+	lines, err := strarray.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read '%s'; %s", filename, err)
+		os.Exit(1)
+	}
 
 	if strarray.ContainsAll(lines, linesToAdd) {
 		return
@@ -114,18 +120,10 @@ func installToSshd(cmd, username string) {
 
 	backupFile(filename)
 
-	check(strarray.WriteFile(filename, lines, linesToAdd))
+	check(strarray.WriteFile(filename, lines, linesToAdd), "Failed to write changes to "+filename)
 
-	err := exec.Command("sshd", "-t").Run()
-
-	if err != nil {
-		if exerr, ok := err.(*exec.ExitError); ok {
-			os.Stderr.Write(exerr.Stderr)
-			os.Exit(1)
-		}
-
-		panic(err)
-	}
+	err = exec.Command("sshd", "-t").Run()
+	check(err, "Modified sshd_config failed to lint. Correct the errors before proceeding.")
 }
 
 func installToPam(selfPath string) {
@@ -135,7 +133,10 @@ func installToPam(selfPath string) {
 
 	pamExec := "auth requisite pamExec.so stdout quiet " + selfPath + " pam_create_user\n"
 
-	lines := strarray.ReadFile(filename)
+	lines, err := strarray.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read '%s'; %s", filename, err)
+	}
 
 	for _, line := range lines {
 		if line == pamExec {
@@ -144,7 +145,7 @@ func installToPam(selfPath string) {
 	}
 
 	backupFile(filename)
-	check(strarray.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines))
+	check(strarray.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines), "Failed to modify pam")
 }
 
 func installToCron(selfPath string) {
@@ -155,5 +156,5 @@ func installToCron(selfPath string) {
 
 	contents := "*/10 * * * * root " + selfPath + " sync_groups"
 
-	check(ioutil.WriteFile(filename, []byte(contents), 0644))
+	check(ioutil.WriteFile(filename, []byte(contents), 0644), "Failed to write "+filename)
 }
