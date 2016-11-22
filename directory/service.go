@@ -6,11 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-var iam_svc *iam.IAM
+var iamSvc *iam.IAM
 
 func getIamService() *iam.IAM {
-	if iam_svc != nil {
-		return iam_svc
+	if iamSvc != nil {
+		return iamSvc
 	}
 
 	sess, err := session.NewSession()
@@ -19,7 +19,7 @@ func getIamService() *iam.IAM {
 		panic(err)
 	}
 
-	iam_svc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
+	iamSvc := iam.New(sess, &aws.Config{Region: aws.String("us-east-1")})
 
-	return iam_svc
+	return iamSvc
 }

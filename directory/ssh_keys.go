@@ -32,12 +32,12 @@ func GetActiveSshPublicKeys(username string) ([]*iam.SSHPublicKeyMetadata, error
 	return onlyActiveKeys(resp.SSHPublicKeys), nil
 }
 
-func GetSshEncodedPublicKey(username, key_id *string) (*string, error) {
+func GetSshEncodedPublicKey(username, keyID *string) (*string, error) {
 
 	svc := getIamService()
 
 	keyref, err := svc.GetSSHPublicKey(&iam.GetSSHPublicKeyInput{
-		SSHPublicKeyId: key_id,
+		SSHPublicKeyId: keyID,
 		UserName:       username,
 		Encoding:       aws.String(iam.EncodingTypeSsh),
 	})
