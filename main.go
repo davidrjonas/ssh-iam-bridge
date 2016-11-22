@@ -15,18 +15,20 @@ import (
 	"github.com/kardianos/osext"
 )
 
-const NAME = "ssh-iam-bridge"
-const VERSION = "1.0.0"
-const PREFIX = "server-"
+var version = "1.0.0"
 
-const EX_EINVAL = 22
-const EX_TEMPFAIL = 75
-const EX_NOPERM = 77
+const exitEInval = 22
+const exitTempFail = 75
+const exitNoPerm = 77
 
-const UID_OFFSET = 2000
+const uidOffset = 2000
+
+func getName() string {
+	return "ssh-iam-bridge"
+}
 
 func getPrefix() string {
-	return PREFIX
+	return "server-"
 }
 
 func awsToUnixID(awsID *string) int {
@@ -39,7 +41,7 @@ func awsToUnixID(awsID *string) int {
 
 	data, _ := binary.ReadUvarint(bytes.NewBuffer(h[len(h)-2:]))
 
-	return UID_OFFSET + (int(data) / 2)
+	return uidOffset + (int(data) / 2)
 }
 
 func getAuthorizedKeys(username string) (*bytes.Buffer, error) {
@@ -81,7 +83,7 @@ func pamCreateUser() {
 
 	if username == "" {
 		os.Stderr.WriteString("Unable to find pam user in the environment\n")
-		os.Exit(EX_EINVAL)
+		os.Exit(exitEInval)
 	}
 
 	// PATH is not set when called from pam.
@@ -90,7 +92,7 @@ func pamCreateUser() {
 	if unix.UserExists(username) {
 		// Supposedly: Terminate the PAM authentication stack. The SSH client
 		// will fail since the user didn't supply a valid public key.
-		os.Exit(EX_NOPERM)
+		os.Exit(exitNoPerm)
 	}
 
 	user, err := directory.GetUser(username)
@@ -107,10 +109,10 @@ func pamCreateUser() {
 
 	syncGroups(getPrefix())
 
-	fmt.Println(NAME + ": Your user has been created but you must reconnect to for it to be active.")
-	fmt.Println(NAME + ": Connect again to log in to your account.")
+	fmt.Println(getName() + ": Your user has been created but you must reconnect to for it to be active.")
+	fmt.Println(getName() + ": Connect again to log in to your account.")
 
-	os.Exit(EX_TEMPFAIL)
+	os.Exit(exitTempFail)
 }
 
 func getSelfPath() string {
@@ -132,7 +134,7 @@ var (
 
 func main() {
 
-	kingpin.Version(VERSION)
+	kingpin.Version(version)
 
 	switch kingpin.Parse() {
 	case installCommand.FullCommand():
