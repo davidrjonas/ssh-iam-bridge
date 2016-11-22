@@ -47,12 +47,12 @@ func createGroup(name string, gid int) *user.Group {
 	return g
 }
 
-func EnsureGroup(group_name string, gid int) error {
+func EnsureGroup(groupName string, gid int) error {
 
-	_, err := user.LookupGroup(group_name)
+	_, err := user.LookupGroup(groupName)
 
 	if _, ok := err.(user.UnknownGroupError); ok {
-		createGroup(group_name, gid)
+		createGroup(groupName, gid)
 	} else if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func UserExists(username string) bool {
 	return true
 }
 
-func UserId(username string) int {
+func UserID(username string) int {
 	user, err := user.Lookup(username)
 
 	if err != nil {

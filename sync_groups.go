@@ -77,7 +77,7 @@ func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]combinedG
 }
 
 func isManagedUser(name string) bool {
-	return unix.UserId(name) >= UID_OFFSET
+	return unix.UserID(name) >= UID_OFFSET
 }
 
 func ensureGroup(name string, gid int, users []string) error {
