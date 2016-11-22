@@ -133,18 +133,18 @@ func installToPam(selfPath string) {
 	filename := "/etc/pam.d/sshd"
 	fmt.Println("Updating", filename)
 
-	pam_exec := "auth requisite pam_exec.so stdout quiet " + selfPath + " pam_create_user\n"
+	pamExec := "auth requisite pamExec.so stdout quiet " + selfPath + " pam_create_user\n"
 
 	lines := string_array.ReadFile(filename)
 
 	for _, line := range lines {
-		if line == pam_exec {
+		if line == pamExec {
 			return
 		}
 	}
 
 	backupFile(filename)
-	check(string_array.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pam_exec}, lines))
+	check(string_array.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines))
 }
 
 func installToCron(selfPath string) {
