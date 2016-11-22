@@ -87,7 +87,7 @@ func Filter(ss []string, filterfn func(s string) bool) (result []string) {
 	return
 }
 
-func WriteFile(filename string, string_sets ...[]string) error {
+func WriteFile(filename string, stringList ...[]string) error {
 
 	file, err := os.Create(filename)
 
@@ -97,7 +97,7 @@ func WriteFile(filename string, string_sets ...[]string) error {
 
 	defer file.Close()
 
-	for _, set := range string_sets {
+	for _, set := range stringList {
 		for _, line := range set {
 			if _, err := file.WriteString(line); err != nil {
 				return err
