@@ -49,7 +49,7 @@ func syncGroups(prefix string) error {
 	}
 
 	// Coalesce
-	var group_map map[string]CombinedGroup
+	combined := make(map[string]CombinedGroup, 0)
 
 	for _, group := range groups {
 		users, err := directory.GetGroupUsers(group)
@@ -62,19 +62,19 @@ func syncGroups(prefix string) error {
 
 		name, _ := removePrefix(aws.StringValue(group.GroupName), prefixes)
 
-		if _, ok := group_map[name]; ok {
-			cg := group_map[name]
+		if _, ok := combined[name]; ok {
+			cg := combined[name]
 			cg.Sources = append(cg.Sources, group)
 			cg.Users = string_array.Unique(append(cg.Users, usernames...))
 		} else {
-			group_map[name] = CombinedGroup{
+			combined[name] = CombinedGroup{
 				Sources: []*iam.Group{group},
 				Users:   usernames,
 			}
 		}
 	}
 
-	for name, cg := range group_map {
+	for name, cg := range combined {
 		var gid int
 
 		if len(cg.Sources) == 1 {
