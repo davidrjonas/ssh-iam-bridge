@@ -75,6 +75,18 @@ func Unique(list []string) (result []string) {
 	return
 }
 
+func Filter(ss []string, filterfn func(s string) bool) (result []string) {
+
+	for _, s := range ss {
+		if !filterfn(s) {
+			continue
+		}
+		result = append(result, s)
+	}
+
+	return
+}
+
 func WriteFile(filename string, string_sets ...[]string) error {
 
 	file, err := os.Create(filename)
