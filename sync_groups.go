@@ -47,7 +47,8 @@ func groupIdForGroups(groups []*iam.Group) int {
 	return awsToUnixId(minGroup.GroupId)
 }
 
-func coalesceGroups(groups []*iam.Group, prefixes []string) (combined map[string]CombinedGroup) {
+func coalesceGroups(groups []*iam.Group, prefixes []string) map[string]CombinedGroup {
+	combined := make(map[string]CombinedGroup, 0)
 
 	for _, group := range groups {
 		users, err := directory.GetGroupUsers(group)
@@ -72,7 +73,7 @@ func coalesceGroups(groups []*iam.Group, prefixes []string) (combined map[string
 		}
 	}
 
-	return
+	return combined
 }
 
 func isManagedUser(name string) bool {
