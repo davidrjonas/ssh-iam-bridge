@@ -81,7 +81,7 @@ func installToSshd(cmd, username string) {
 
 	// TODO: Ensure 'PasswordAuthentication no' and 'UsePAM yes'
 
-	lines_to_add := []string{
+	linesToAdd := []string{
 		"AuthorizedKeysCommand " + cmd + "\n",
 		"AuthorizedKeysCommandUser " + username + "\n",
 		"ChallengeResponseAuthentication yes\n",
@@ -90,14 +90,14 @@ func installToSshd(cmd, username string) {
 
 	lines := string_array.ReadFile(filename)
 
-	if string_array.ContainsAll(lines, lines_to_add) {
+	if string_array.ContainsAll(lines, linesToAdd) {
 		return
 	}
 
 	fmt.Println("Updating", filename)
 
 	// Comment out specific lines
-	lines_to_comment := []string{
+	linesToComment := []string{
 		"AuthorizedKeysCommand ",
 		"AuthorizedKeysCommandUser ",
 		"ChallengeResponseAuthentication ",
@@ -105,7 +105,7 @@ func installToSshd(cmd, username string) {
 	}
 
 	for idx, line := range lines {
-		for _, check := range lines_to_comment {
+		for _, check := range linesToComment {
 			if strings.HasPrefix(line, check) {
 				lines[idx] = "# " + line
 			}
@@ -114,7 +114,7 @@ func installToSshd(cmd, username string) {
 
 	backupFile(filename)
 
-	check(string_array.WriteFile(filename, lines, lines_to_add))
+	check(string_array.WriteFile(filename, lines, linesToAdd))
 
 	err := exec.Command("sshd", "-t").Run()
 
