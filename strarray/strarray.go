@@ -135,5 +135,5 @@ func ReadFile(filename string) ([]string, error) {
 		return nil, err
 	}
 
-	return lines, err
+	return lines, nil
 }
