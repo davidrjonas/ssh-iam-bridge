@@ -98,7 +98,7 @@ func pamCreateUser() {
 	user, err := directory.GetUser(username)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to IAM user '%s'; %s", username, err)
+		fmt.Fprintf(os.Stderr, "Failed to get IAM user '%s'; %s", username, err)
 		os.Exit(1)
 	}
 
