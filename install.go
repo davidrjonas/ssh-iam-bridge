@@ -37,6 +37,8 @@ func install(selfPath, username string) {
 	installToSshd(cmdName, username)
 	installToPam(selfPath)
 	installToCron(selfPath)
+
+	fmt.Println("* Restart sshd for changes to take effect")
 }
 
 // ssh is picky about AuthorizedKeysCommand, see man sshd_config
