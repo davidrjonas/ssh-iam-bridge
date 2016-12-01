@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- Beginning tests for strarray
 
 ## [1.0.1] - 2016-11-21
 ### Changed
