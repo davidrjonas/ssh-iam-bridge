@@ -58,9 +58,11 @@ func Diff(tests, set []string) []string {
 	return missing
 }
 
-func Unique(list []string) (result []string) {
+func Unique(list []string) []string {
 
 	sort.Strings(list)
+
+	result := []string{}
 
 	var last string
 
@@ -72,10 +74,12 @@ func Unique(list []string) (result []string) {
 		result = append(result, s)
 	}
 
-	return
+	return result
 }
 
-func Filter(ss []string, filterfn func(s string) bool) (result []string) {
+func Filter(ss []string, filterfn func(s string) bool) []string {
+
+	result := []string{}
 
 	for _, s := range ss {
 		if !filterfn(s) {
@@ -84,7 +88,7 @@ func Filter(ss []string, filterfn func(s string) bool) (result []string) {
 		result = append(result, s)
 	}
 
-	return
+	return result
 }
 
 func WriteFile(filename string, stringList ...[]string) error {

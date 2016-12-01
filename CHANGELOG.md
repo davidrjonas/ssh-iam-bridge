@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - AWS SDK update
+- strarray.Filter() and Unique() to return empty slice
 
 ## [1.0.3] - 2016-11-30
 ### Fixed
