@@ -131,7 +131,7 @@ func installToPam(selfPath string) {
 	filename := "/etc/pam.d/sshd"
 	fmt.Println("Updating", filename)
 
-	pamExec := "auth requisite pamExec.so stdout quiet " + selfPath + " pam_create_user\n"
+	pamExec := "auth requisite pam_exec.so stdout quiet " + selfPath + " pam_create_user\n"
 
 	lines, err := strarray.ReadFile(filename)
 	if err != nil {
