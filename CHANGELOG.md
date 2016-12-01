@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- Beginning tests for strarray
+- Tests for strarray
+
+### Changed
+- AWS SDK update
 
 ## [1.0.3] - 2016-11-30
 ### Fixed
