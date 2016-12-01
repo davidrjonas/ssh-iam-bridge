@@ -3,3 +3,4 @@ import:
 - package: github.com/aws/aws-sdk-go
 - package: gopkg.in/alecthomas/kingpin.v2
 - package: github.com/kardianos/osext
+- package: github.com/stretchr/testify
