@@ -31,11 +31,13 @@ func backupFile(filename string) {
 	check(err, "Failed to backup "+filename)
 }
 
-func install(selfPath, username string) {
+func install(selfPath, username string, noPam bool) {
 	cmdName := installAuthorizedKeysCommandScript(selfPath)
 	installUser(username)
 	installToSshd(cmdName, username)
-	installToPam(selfPath)
+	if !noPam {
+		installToPam(selfPath)
+	}
 	installToCron(selfPath)
 
 	fmt.Println("* Restart sshd for changes to take effect")
