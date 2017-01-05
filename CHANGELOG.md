@@ -7,8 +7,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [1.0.4] - 2017-01-05
+### Fixed
+- Properly match group prefixes
+
 ### Added
 - Tests for strarray
+- `sync` command
+- `--no-pam` flag to `install` command
 
 ### Changed
 - AWS SDK update
@@ -37,7 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 1.0.0 - 2016-11-21
 - Initial release with everything "working"
 
-[Unreleased]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.4...HEAD
+[1.0.4]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/davidrjonas/ssh-iam-bridge/compare/1.0.0...1.0.1
