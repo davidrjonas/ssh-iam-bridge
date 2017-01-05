@@ -6,12 +6,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-func isPrefixedBy(s *string, prefixes []string) bool {
+func isPrefixedGroupName(s string, prefixes []string) bool {
+	i := strings.LastIndex(s, "-")
+	if i == -1 {
+		return false
+	}
+
+	without_group := s[0 : i+1]
+
 	for _, prefix := range prefixes {
-		if strings.HasPrefix(*s, prefix) {
+		if without_group == prefix {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -39,7 +47,7 @@ func GetGroups(prefixes []string) ([]*iam.Group, error) {
 	}
 
 	return filterGroups(resp.Groups, func(g *iam.Group) bool {
-		return isPrefixedBy(g.GroupName, prefixes)
+		return isPrefixedGroupName(*g.GroupName, prefixes)
 	}), nil
 }
 
