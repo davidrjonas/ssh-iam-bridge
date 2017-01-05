@@ -38,7 +38,7 @@ func install(selfPath, username string, noPam bool) {
 	if !noPam {
 		installToPam(selfPath)
 	}
-	installToCron(selfPath)
+	installToCron(selfPath, noPam)
 
 	fmt.Println("* Restart sshd for changes to take effect")
 }
@@ -152,13 +152,19 @@ func installToPam(selfPath string) {
 	check(strarray.WriteFile(filename, []string{"# Next line added by " + selfPath + "\n", pamExec}, lines), "Failed to modify pam")
 }
 
-func installToCron(selfPath string) {
+func installToCron(selfPath string, createMissingUsers bool) {
+
+	options := []string{}
+
+	if !createMissingUsers {
+		options = append(options, "--ignore-missing-users")
+	}
 
 	filename := "/etc/cron.d/" + path.Base(selfPath)
 
 	fmt.Println("Installing crontab", filename)
 
-	contents := "*/10 * * * * root " + selfPath + " sync_groups"
+	contents := "*/10 * * * * root " + selfPath + " sync " + strings.Join(options, " ")
 
 	check(ioutil.WriteFile(filename, []byte(contents), 0644), "Failed to write "+filename)
 }

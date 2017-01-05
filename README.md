@@ -59,8 +59,11 @@ Commands:
   help [<command>...]
     Show help.
 
-  install [<user>]
+  install [<flags>] [<user>]
     Install this program to authenticate SSH connections and create users
+
+    Flags:
+      --no-pam   Don't install to PAM (no autocreate user on login, create users on sync)
 
   authorized_keys <user>
     Get the authorized_keys from IAM for user
