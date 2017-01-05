@@ -149,7 +149,7 @@ func sync(prefix string, ignoreMissingUsers bool) error {
 	var prefixes []string
 
 	if role != "" {
-		prefixes = []string{prefix, prefix + role + "-"}
+		prefixes = []string{prefix + role + "-", prefix}
 	} else {
 		prefixes = []string{prefix}
 	}
