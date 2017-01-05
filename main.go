@@ -132,7 +132,9 @@ var (
 	installCommandUser   = installCommand.Arg("user", "The user under which to run the AuthorizedKeysCommand, will be created if it doesn't exit").Default("ssh-iam-bridge").String()
 	authKeysCommand      = kingpin.Command("authorized_keys", "Get the authorized_keys from IAM for user")
 	authKeysCommandUser  = authKeysCommand.Arg("user", "The IAM username for which to get keys").Required().String()
-	syncGroupsCommand    = kingpin.Command("sync_groups", "Sync the IAM groups with the local system groups")
+	syncCommand          = kingpin.Command("sync", "Sync the IAM users and groups with the local system")
+	ignoreMissingUsers   = syncCommand.Flag("ignore-missing-users", "Don't create missing system users (same as sync_groups)").Bool()
+	syncGroupsCommand    = kingpin.Command("sync_groups", "Sync only the IAM groups with the local system groups")
 	pamCreateUserCommand = kingpin.Command("pam_create_user", "Create a user from the env during the sshd pam phase")
 )
 
@@ -145,6 +147,8 @@ func main() {
 		install(getSelfPath(), *installCommandUser, *installNoPamFlag)
 	case authKeysCommand.FullCommand():
 		printAuthorizedKeys(*authKeysCommandUser)
+	case syncCommand.FullCommand():
+		sync(getPrefix(), *ignoreMissingUsers)
 	case syncGroupsCommand.FullCommand():
 		syncGroups(getPrefix())
 	case pamCreateUserCommand.FullCommand():

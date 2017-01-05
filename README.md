@@ -65,8 +65,11 @@ Commands:
   authorized_keys <user>
     Get the authorized_keys from IAM for user
 
+  sync
+    Sync the IAM users and groups with the local system
+
   sync_groups
-    Sync the IAM groups with the local system groups
+    Sync only the IAM groups with the local system groups
 
   pam_create_user
     Create a user from the env during the sshd pam phase
